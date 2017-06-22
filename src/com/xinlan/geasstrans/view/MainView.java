@@ -8,11 +8,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -22,6 +24,7 @@ import javax.swing.JTextField;
 
 import com.xinlan.geasstrans.controller.RWConfigFile;
 import com.xinlan.geasstrans.model.AppConstants;
+import com.xinlan.geasstrans.model.FileModule;
 import com.xinlan.geasstrans.util.VersionUtil;
 
 public class MainView {
@@ -46,6 +49,10 @@ public class MainView {
 	protected JLabel  mFileListText;
 	protected JButton mSelectFileBtn;
 	protected JButton mSendFileBtn;
+	
+	protected JLabel mStatusLabel;
+	
+	private List<FileModule> mSelectedList = new ArrayList<FileModule>(2);
 
 	public static void main(String agrs[]) {
 		new MainView().execute();
@@ -117,6 +124,11 @@ public class MainView {
 
 		mFileSelectPanel.add(mSelectFileBtn);
 		mFileSelectPanel.add(mSendFileBtn);
+		
+		
+		mStatusLabel = new JLabel();
+		mStatusLabel.setText("未连接");
+		mBodyPanel.add(mStatusLabel);
 	}
 
 	private void addListener() {
@@ -146,6 +158,13 @@ public class MainView {
 				setHeadPanelEnable(true);
 			}
 		});
+		
+		mSelectFileBtn.addActionListener(new ActionListener(){//选择文件按钮
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				addFileToTrans();
+			}
+		});
 	}
 
 	protected void setHeadPanelEnable(boolean enable) {
@@ -162,6 +181,17 @@ public class MainView {
 		}
 
 		RWConfigFile.writeKey(AppConstants.LAST_CONNECT_ADDRESS, mServerIPText.getText().trim());
+	}
+	
+	/**
+	 * 选择文件 添加到待发送列表中
+	 */
+	private void addFileToTrans(){
+		JFileChooser chooser = new JFileChooser();
+		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		chooser.showDialog(new JLabel(), "选择传输文件");
+		File selectFile = chooser.getSelectedFile();
+		
 	}
 
 	protected void setBodyPanelEnable(boolean enable) {
