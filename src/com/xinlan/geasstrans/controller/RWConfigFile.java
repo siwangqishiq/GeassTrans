@@ -11,7 +11,6 @@ import java.util.Properties;
 import com.xinlan.geasstrans.model.AppConstants;
 
 /**
- * ¶ÁĞ´ÅäÖÃÎÄ¼ş
  * 
  * @author panyi
  *

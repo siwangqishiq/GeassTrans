@@ -84,11 +84,11 @@ public class MainView {
 		mHeadPanel.add(mServerIPText, BorderLayout.CENTER);
 
 		JPanel headBtnsPanel = new JPanel();
-		mConnectBtn = new JButton("Á¬½Ó");
+		mConnectBtn = new JButton("é“¾æ¥");
 		headBtnsPanel.add(mConnectBtn);
-		mListenBtn = new JButton("¿ªÊ¼¼àÌı");
+		mListenBtn = new JButton("ç›‘å¬");
 		headBtnsPanel.add(mListenBtn);
-		mCancelWorkBtn = new JButton("¶Ï¿ªÁ¬½Ó");
+		mCancelWorkBtn = new JButton("æ–­å¼€é“¾æ¥");
 		headBtnsPanel.add(mCancelWorkBtn);
 		mCancelWorkBtn.setVisible(false);
 
@@ -112,8 +112,8 @@ public class MainView {
 		mFileListScrollPanel = new JScrollPane(mFileListText);
 		mFileSelectPanel.add(mFileListText);
 
-		mSelectFileBtn = new JButton("Ñ¡ÔñÎÄ¼ş");
-		mSendFileBtn = new JButton("·¢ËÍÎÄ¼ş");
+		mSelectFileBtn = new JButton("é€‰æ‹©æ–‡ä»¶");
+		mSendFileBtn = new JButton("å‘é€æ–‡ä»¶");
 
 		mFileSelectPanel.add(mSelectFileBtn);
 		mFileSelectPanel.add(mSendFileBtn);
@@ -126,21 +126,21 @@ public class MainView {
 			}
 		});
 
-		mListenBtn.addActionListener(new ActionListener() {// ¼àÌı°´Å¥
+		mListenBtn.addActionListener(new ActionListener() {//ç›‘å¬
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				setHeadPanelEnable(false);
 			}
 		});
 
-		mConnectBtn.addActionListener(new ActionListener() {// Á¬½Ó°´Å¥
+		mConnectBtn.addActionListener(new ActionListener() {// é“¾æ¥
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				setHeadPanelEnable(false);
 			}
 		});
 
-		mCancelWorkBtn.addActionListener(new ActionListener() {// È¡Ïû¹¤×÷°´Å¥
+		mCancelWorkBtn.addActionListener(new ActionListener() {// æ–­å¼€é“¾æ¥
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				setHeadPanelEnable(true);
@@ -177,12 +177,6 @@ public class MainView {
 		} // end for each
 	}
 
-	/**
-	 * »ñÈ¡PanelÏÂËùÓĞ×Ó¿Ø¼ş
-	 * 
-	 * @param panel
-	 * @return
-	 */
 	private static List<Component> listChildComponents(JPanel panel) {
 		int count = panel.getComponentCount();
 		List<Component> components = new ArrayList<Component>(count);

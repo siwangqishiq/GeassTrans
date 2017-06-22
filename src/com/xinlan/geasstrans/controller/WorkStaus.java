@@ -1,7 +1,7 @@
 package com.xinlan.geasstrans.controller;
 
 public enum WorkStaus {
-	IDLE,//ÉĞÎ´¿ªÊ¼¹¤×÷
-	SERVER,//·şÎñÆ÷×´Ì¬¹¤×÷
-	CLIENT//ÒÔ¿Í»§¶Ë×´Ì¬¹¤×÷
+	IDLE,//ç©ºé—²
+	SERVER,//æœåŠ¡å™¨æ¨¡å¼
+	CLIENT//å®¢æˆ·ç«¯æ¨¡å¼
 }
