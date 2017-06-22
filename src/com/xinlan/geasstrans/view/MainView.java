@@ -14,7 +14,10 @@ import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import com.xinlan.geasstrans.controller.RWConfigFile;
@@ -37,6 +40,12 @@ public class MainView {
 	protected JButton mCancelWorkBtn;
 
 	protected JPanel mBodyPanel;
+
+	protected JPanel mFileSelectPanel;
+	protected JScrollPane mFileListScrollPanel;
+	protected JLabel  mFileListText;
+	protected JButton mSelectFileBtn;
+	protected JButton mSendFileBtn;
 
 	public static void main(String agrs[]) {
 		new MainView().execute();
@@ -93,6 +102,21 @@ public class MainView {
 		mBodyPanel = new JPanel();
 		mMainFrame.add(mBodyPanel, BorderLayout.CENTER);
 
+		mBodyPanel.setLayout(new BoxLayout(mBodyPanel, BoxLayout.Y_AXIS));
+
+		mFileSelectPanel = new JPanel();
+		mFileSelectPanel.setLayout(new BoxLayout(mFileSelectPanel, BoxLayout.Y_AXIS));
+		mBodyPanel.add(mFileSelectPanel);
+
+		mFileListText = new JLabel();
+		mFileListScrollPanel = new JScrollPane(mFileListText);
+		mFileSelectPanel.add(mFileListText);
+
+		mSelectFileBtn = new JButton("选择文件");
+		mSendFileBtn = new JButton("发送文件");
+
+		mFileSelectPanel.add(mSelectFileBtn);
+		mFileSelectPanel.add(mSendFileBtn);
 	}
 
 	private void addListener() {
