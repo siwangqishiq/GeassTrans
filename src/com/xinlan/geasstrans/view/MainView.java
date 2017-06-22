@@ -17,6 +17,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import com.xinlan.geasstrans.controller.RWConfigFile;
+import com.xinlan.geasstrans.model.AppConstants;
 import com.xinlan.geasstrans.util.VersionUtil;
 
 public class MainView {
@@ -53,10 +55,23 @@ public class MainView {
 
 		mMainFrame.setLayout(new BorderLayout());
 
+		initHeadUI();
+
+		initBodyUI();
+
+		setHeadPanelEnable(true);
+
+		addListener();
+
+		mMainFrame.setVisible(true);
+		mMainFrame.setResizable(false);
+	}
+
+	private void initHeadUI() {
 		mHeadPanel = new JPanel();
 		mHeadPanel.setLayout(new BorderLayout());
 		mServerIPText = new JTextField();
-		mServerIPText.setText("192.168.1.1");
+		mServerIPText.setText(RWConfigFile.readKey(AppConstants.LAST_CONNECT_ADDRESS));
 		mHeadPanel.add(mServerIPText, BorderLayout.CENTER);
 
 		JPanel headBtnsPanel = new JPanel();
@@ -71,43 +86,37 @@ public class MainView {
 		mHeadPanel.add(headBtnsPanel, BorderLayout.EAST);
 
 		mMainFrame.add(mHeadPanel, BorderLayout.NORTH);
+	}
 
+	private void initBodyUI() {
 		// bodyPanel
 		mBodyPanel = new JPanel();
-
 		mMainFrame.add(mBodyPanel, BorderLayout.CENTER);
 
-		setHeadPanelEnable(true);
-
-	
-		addListener();
-		
-		mMainFrame.setVisible(true);
-		mMainFrame.setResizable(false);
 	}
-	
-	private void addListener(){
+
+	private void addListener() {
 		mMainFrame.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				System.exit(0);
 			}
 		});
-		
-		mListenBtn.addActionListener(new ActionListener() {//监听按钮
+
+		mListenBtn.addActionListener(new ActionListener() {// 监听按钮
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				setHeadPanelEnable(false);
 			}
 		});
-		
-		mConnectBtn.addActionListener(new ActionListener() {//连接按钮
+
+		mConnectBtn.addActionListener(new ActionListener() {// 连接按钮
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				setHeadPanelEnable(false);
 			}
 		});
-		
-		mCancelWorkBtn.addActionListener(new ActionListener() {//取消工作按钮
+
+		mCancelWorkBtn.addActionListener(new ActionListener() {// 取消工作按钮
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				setHeadPanelEnable(true);
@@ -116,17 +125,19 @@ public class MainView {
 	}
 
 	protected void setHeadPanelEnable(boolean enable) {
-		if(enable){
+		if (enable) {
 			mServerIPText.setVisible(true);
 			mConnectBtn.setVisible(true);
 			mListenBtn.setVisible(true);
 			mCancelWorkBtn.setVisible(false);
-		}else{
+		} else {
 			mServerIPText.setVisible(false);
 			mConnectBtn.setVisible(false);
 			mListenBtn.setVisible(false);
 			mCancelWorkBtn.setVisible(true);
 		}
+
+		RWConfigFile.writeKey(AppConstants.LAST_CONNECT_ADDRESS, mServerIPText.getText().trim());
 	}
 
 	protected void setBodyPanelEnable(boolean enable) {
