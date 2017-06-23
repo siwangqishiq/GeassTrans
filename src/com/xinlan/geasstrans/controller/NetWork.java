@@ -22,6 +22,7 @@ public class NetWork {
 		public void run() {
 			try {
 				mSocket = mServerSocket.accept();
+				
 				if (mNetCallBack != null) {
 					mNetCallBack.onConnectSuccess(mSocket.getRemoteSocketAddress().toString());
 				}
@@ -42,9 +43,8 @@ public class NetWork {
 	public void startServerListen(INetWorkCallback callback) {
 		setNetWorkAction(callback);
 		try {
-			if (mServerSocket == null) {
-				mServerSocket = new ServerSocket(AppConstants.SERVER_PORT);
-			}
+			mServerSocket = new ServerSocket(AppConstants.SERVER_PORT);
+			
 			mThreaPool.execute(mAcceptRunnable);
 			mWorkStatus = WorkStaus.SERVER;
 		} catch (IOException e) {
@@ -69,21 +69,22 @@ public class NetWork {
 			}
 		}
 	}
-	
+
 	/**
 	 * 断开链接
 	 */
-	public void disConnection(){
-		
-	}
-
+	public void disConnection() {
+		closeNetWork();
+		mWorkStatus = WorkStaus.IDLE;
+	}	
+	
 	public void closeNetWork() {
 		try {
-			if(mSocket!=null && !mSocket.isClosed()){
+			if (mSocket != null && !mSocket.isClosed()) {
 				mSocket.close();
 			}
-			
-			if (mServerSocket != null&& !mServerSocket.isClosed()) {
+
+			if (mServerSocket != null && !mServerSocket.isClosed()) {
 				mServerSocket.close();
 			}
 		} catch (IOException e) {

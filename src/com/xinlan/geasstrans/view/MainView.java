@@ -62,22 +62,25 @@ public class MainView {
 
 	public void execute() {
 		initUI();
-		
+
 		mNetWork = new NetWork();
 	}
 
-	private void becameServer() {
+	private void asServer() {
+		mStatusLabel.setText("启动服务 等待连接...");
 		mNetWork.startServerListen(new INetWorkCallback() {
 			@Override
 			public void onConnectSuccess(String remote) {
-				// System.out.println(remote+"建立链接");
-				mStatusLabel.setText("与" + remote + "建立链接");
+				// System.out.println(remote+"建立连接");
+				mStatusLabel.setText("与" + remote + "建立连接");
+				setPanelEnable(mBodyPanel, true);
 			}
 
 			@Override
 			public void onConnectFail(Exception e) {
-				// System.out.println("链接失:"+e);
+				// System.out.println("连接失:"+e);
 				setHeadPanelEnable(true);
+				setPanelEnable(mBodyPanel, false);
 				mStatusLabel.setText("发生错误" + e);
 			}
 		});
@@ -85,21 +88,23 @@ public class MainView {
 		setHeadPanelEnable(false);
 	}
 
-	private void becameClient() {
+	private void asClient() {
 		String serverIp = mServerIPText.getText().trim();
 		mNetWork.startConnect(serverIp, new INetWorkCallback() {
 
 			@Override
 			public void onConnectSuccess(String remote) {
-				// System.out.println("与服务端"+remote+"建立链接");
+				// System.out.println("与服务端"+remote+"建立连接");
 				setHeadPanelEnable(false);
-				mStatusLabel.setText("与服务端" + remote + "建立链接");
+				setPanelEnable(mBodyPanel, true);
+				mStatusLabel.setText("与服务端" + remote + "建立连接");
 			}
 
 			@Override
 			public void onConnectFail(Exception e) {
-				// System.out.println("链接服务端失败 : "+e);
+				// System.out.println("连接服务端失败 : "+e);
 				setHeadPanelEnable(true);
+				setPanelEnable(mBodyPanel, false);
 				mStatusLabel.setText("发生错误" + e);
 			}
 		});
@@ -136,11 +141,11 @@ public class MainView {
 		mHeadPanel.add(mServerIPText, BorderLayout.CENTER);
 
 		JPanel headBtnsPanel = new JPanel();
-		mConnectBtn = new JButton("链接");
+		mConnectBtn = new JButton("连接");
 		headBtnsPanel.add(mConnectBtn);
 		mListenBtn = new JButton("监听");
 		headBtnsPanel.add(mListenBtn);
-		mCancelWorkBtn = new JButton("断开链接");
+		mCancelWorkBtn = new JButton("断开连接");
 		headBtnsPanel.add(mCancelWorkBtn);
 		mCancelWorkBtn.setVisible(false);
 
@@ -188,22 +193,24 @@ public class MainView {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				// setHeadPanelEnable(false);
-				becameServer();
+				asServer();
 			}
 		});
 
-		mConnectBtn.addActionListener(new ActionListener() {// 链接
+		mConnectBtn.addActionListener(new ActionListener() {// 连接
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				// setHeadPanelEnable(false);
-				becameClient();
+				asClient();
 			}
 		});
 
-		mCancelWorkBtn.addActionListener(new ActionListener() {// 断开链接
+		mCancelWorkBtn.addActionListener(new ActionListener() {// 断开连接
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				mNetWork.disConnection();
 				setHeadPanelEnable(true);
+				setPanelEnable(mBodyPanel, false);
 			}
 		});
 
@@ -248,10 +255,6 @@ public class MainView {
 		chooser.showDialog(new JLabel(), "选择传输文件");
 		File selectFile = chooser.getSelectedFile();
 
-	}
-
-	protected void setBodyPanelEnable(boolean enable) {
-		setPanelEnable(mBodyPanel, enable);
 	}
 
 	public static void setPanelEnable(JPanel panel, boolean enable) {
