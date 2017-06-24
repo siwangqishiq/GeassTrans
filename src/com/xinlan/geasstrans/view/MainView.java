@@ -83,6 +83,13 @@ public class MainView {
 				setPanelEnable(mBodyPanel, false);
 				mStatusLabel.setText("发生错误" + e);
 			}
+
+			@Override
+			public void onRemoteDisconnect() {
+				setHeadPanelEnable(true);
+				setPanelEnable(mBodyPanel, false);
+				mStatusLabel.setText("启动服务 等待连接...");
+			}
 		});
 
 		setHeadPanelEnable(false);
@@ -106,6 +113,13 @@ public class MainView {
 				setHeadPanelEnable(true);
 				setPanelEnable(mBodyPanel, false);
 				mStatusLabel.setText("发生错误" + e);
+			}
+
+			@Override
+			public void onRemoteDisconnect() {
+				setHeadPanelEnable(true);
+				setPanelEnable(mBodyPanel, false);
+				mStatusLabel.setText("空闲状态");
 			}
 		});
 	}
