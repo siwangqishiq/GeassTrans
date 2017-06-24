@@ -53,6 +53,9 @@ public class MainView {
 	protected JLabel mStatusLabel;
 
 	private List<FileModule> mSelectedList = new ArrayList<FileModule>(10);
+	private List<FileModule> mReceiveList = new ArrayList<FileModule>();
+	private long mTotal = 0;
+	private long mCurProgress = 0;
 
 	private NetWork mNetWork;
 
@@ -90,6 +93,11 @@ public class MainView {
 				setPanelEnable(mBodyPanel, false);
 				mStatusLabel.setText("启动服务 等待连接...");
 			}
+
+			@Override
+			public void onReceiveFilesInfoList(List<FileModule> receiveList) {
+				
+			}
 		});
 
 		setHeadPanelEnable(false);
@@ -121,6 +129,11 @@ public class MainView {
 				setPanelEnable(mBodyPanel, false);
 				mStatusLabel.setText("空闲状态");
 			}
+
+			@Override
+			public void onReceiveFilesInfoList(List<FileModule> receiveList) {
+				handleOnReceiveFilesInfo(receiveList);
+			}
 		});
 	}
 
@@ -145,8 +158,6 @@ public class MainView {
 		mMainFrame.setResizable(false);
 
 		setPanelEnable(mBodyPanel, false);
-		
-		
 	}
 
 	private void initHeadUI() {
@@ -293,6 +304,17 @@ public class MainView {
 		//System.out.println("selectFile ---> "+selectFile.getAbsolutePath());
 		mSelectedList.add(FileModule.create(selectFile.getAbsolutePath()));
 		refreshSendListFileUI();
+	}
+	
+	private void handleOnReceiveFilesInfo(List<FileModule> list){
+		mReceiveList.addAll(list);
+		
+		mTotal = 0;
+		for(FileModule m:mReceiveList){
+			mTotal+=m.getSize();
+		}
+		
+		mStatusLabel.setText("接收文件"+mCurProgress+"/"+mTotal);
 	}
 
 	public static void setPanelEnable(JPanel panel, boolean enable) {
