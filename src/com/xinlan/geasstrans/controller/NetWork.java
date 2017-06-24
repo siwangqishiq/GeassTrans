@@ -5,23 +5,30 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.xinlan.geasstrans.model.AppConstants;
+import com.xinlan.geasstrans.model.FileModule;
 
 public class NetWork {
+	public static final int BUFF_SIZE = 1024*1024;//1K
+	
 	private WorkStaus mWorkStatus = WorkStaus.IDLE;
 	private NetStatus mStatus = NetStatus.UNCONNECT;
 
-	private ExecutorService mThreaPool;
+	private ExecutorService mThreadPool;
 
 	private ServerSocket mServerSocket;
 	private Socket mSocket;
 	private INetWorkCallback mNetCallBack;
 	
 	private AtomicBoolean running =new AtomicBoolean(false);
+	
+	private List<FileModule> sendFileList = new ArrayList<FileModule>();
 
 	private Runnable mAcceptRunnable = new Runnable() {
 		@Override
@@ -41,12 +48,12 @@ public class NetWork {
 	private Runnable mInputRunnable = new Runnable(){
 		@Override
 		public void run() {
-			byte[] buf = new byte[1];
+			byte[] buf = new byte[BUFF_SIZE];
 			
 			while(running.get()){
 				try {
 					InputStream inputStream = mSocket.getInputStream();
-					inputStream.read(buf);
+					int len = inputStream.read(buf);
 					
 					if(buf[0] == TransProtocol.CRL_CLOSE){
 						onRemoteDisconnect();
@@ -55,6 +62,7 @@ public class NetWork {
 					
 					switch(buf[0]){
 					case TransProtocol.CRL_SEND://send
+						
 						break;
 					}//end switch
 				} catch (Exception e) {
@@ -64,8 +72,9 @@ public class NetWork {
 		}// end run
 	};
 	
+	
 	public NetWork() {
-		mThreaPool = Executors.newFixedThreadPool(3);
+		mThreadPool = Executors.newFixedThreadPool(3);
 		mWorkStatus = WorkStaus.IDLE;
 	}
 
@@ -74,7 +83,7 @@ public class NetWork {
 		try {
 			mServerSocket = new ServerSocket(AppConstants.SERVER_PORT);
 			
-			mThreaPool.execute(mAcceptRunnable);
+			mThreadPool.execute(mAcceptRunnable);
 			mWorkStatus = WorkStaus.SERVER;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -104,7 +113,7 @@ public class NetWork {
 		mStatus = NetStatus.CONNECT;
 		running.set(true);
 		
-		mThreaPool.execute(mInputRunnable);
+		mThreadPool.execute(mInputRunnable);
 	}
 
 	/**
@@ -156,6 +165,37 @@ public class NetWork {
 
 	public void setNetWorkAction(INetWorkCallback callback) {
 		this.mNetCallBack = callback;
+	}
+	
+	/**
+	 * 添加文件发送任务
+	 * @param list
+	 */
+	public void addSendTask(List<FileModule> list){
+		if(mStatus != NetStatus.CONNECT)
+			return;
+		
+		sendFileList.addAll(list);
+		mThreadPool.execute(new Runnable(){
+			@Override
+			public void run() {
+				doSendFileTask();
+			}
+		});
+	}
+	
+	private void doSendFileTask(){
+		try{
+			byte[] sendBuf = new byte[1024];
+			sendBuf[0] = TransProtocol.CRL_SEND;
+			
+			OutputStream out = mSocket.getOutputStream();
+			out.write(sendBuf);
+			out.flush();
+			
+		}catch(Exception e){
+			e.printStackTrace();
+		}
 	}
 
 	public interface INetWorkCallback {

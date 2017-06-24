@@ -52,7 +52,7 @@ public class MainView {
 
 	protected JLabel mStatusLabel;
 
-	private List<FileModule> mSelectedList = new ArrayList<FileModule>(2);
+	private List<FileModule> mSelectedList = new ArrayList<FileModule>(10);
 
 	private NetWork mNetWork;
 
@@ -145,6 +145,8 @@ public class MainView {
 		mMainFrame.setResizable(false);
 
 		setPanelEnable(mBodyPanel, false);
+		
+		
 	}
 
 	private void initHeadUI() {
@@ -234,6 +236,26 @@ public class MainView {
 				addFileToTrans();
 			}
 		});
+		
+		mCancelSendBtn.addActionListener(new ActionListener() {// 取消选中的文件
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				mSelectedList.clear();
+				refreshSendListFileUI();
+			}
+		});
+	}
+	
+	private void refreshSendListFileUI(){
+		StringBuffer sb = new StringBuffer("<html>");
+		
+		for(FileModule module:mSelectedList){
+			sb.append(module.getPath()).append("<br/> ");
+		}
+		
+		sb.append("</html>");
+		
+		mFileListText.setText(sb.toString());
 	}
 
 	protected void setHeadPanelEnable(boolean enable) {
@@ -268,7 +290,9 @@ public class MainView {
 		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		chooser.showDialog(new JLabel(), "选择传输文件");
 		File selectFile = chooser.getSelectedFile();
-
+		//System.out.println("selectFile ---> "+selectFile.getAbsolutePath());
+		mSelectedList.add(FileModule.create(selectFile.getAbsolutePath()));
+		refreshSendListFileUI();
 	}
 
 	public static void setPanelEnable(JPanel panel, boolean enable) {
