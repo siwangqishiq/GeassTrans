@@ -255,6 +255,25 @@ public class MainView {
 				refreshSendListFileUI();
 			}
 		});
+		
+		mSendFileBtn.addActionListener(new ActionListener() {// 发送文件
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				doSendFiles();
+			}
+		});
+	}
+	
+	/**
+	 * do send files
+	 */
+	private void doSendFiles(){
+		if(mSelectedList.size()==0)
+			return;
+		
+		//setHeadPanelEnable(false);
+		mCancelWorkBtn.setEnabled(false);
+		mNetWork.addSendTask(mSelectedList);
 	}
 	
 	private void refreshSendListFileUI(){
