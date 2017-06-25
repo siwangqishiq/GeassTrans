@@ -1,30 +1,31 @@
 package com.xinlan.geasstrans.controller;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
 public class NetHandler {
-	protected DataInputStream in;
-	protected DataOutputStream out;
+	public static final int BUFFER_SIZE = 20*1024;//10k
+	
+	protected InputStream in;
+	protected OutputStream out;
 	protected NetWork netWork;
 	protected Socket socket;
 	
 	
-	public NetHandler(DataInputStream in,
-			DataOutputStream out,Socket sock,NetWork netWork){
+	public NetHandler(InputStream in,
+			OutputStream out,Socket sock,NetWork netWork){
 		this.socket = sock;
 		this.in = in;
 		this.out = out;
 		this.netWork = netWork;
 	}
 	
-	public void writeRespOK() throws IOException {
-		out.writeByte(TransProtocol.CRL_RECEIVE_RSP_OK);
+	public void sendCtlData(byte sendByte) throws IOException {
+		byte[] buf = new byte[2];
+		buf[0] = sendByte;
+		out.write(buf, 0, 1);
 		out.flush();
-		System.out.println("wirte respon CRL_RECEIVE_RSP_OK");
 	}
 }//end class

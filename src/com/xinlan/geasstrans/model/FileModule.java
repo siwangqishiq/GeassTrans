@@ -8,6 +8,12 @@ import java.io.File;
  *
  */
 public class FileModule {
+	@Override
+	public String toString() {
+		return "FileModule [path=" + path + ", name=" + name + ", size=" + size
+				+ ", curProgress=" + curProgress + "]";
+	}
+
 	private String path;
 	private String name;
 	private long size;

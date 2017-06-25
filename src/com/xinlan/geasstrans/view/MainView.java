@@ -96,7 +96,7 @@ public class MainView {
 
 			@Override
 			public void onReceiveFilesInfoList(List<FileModule> receiveList) {
-				
+				handleOnReceiveFilesInfo(receiveList);
 			}
 		});
 
@@ -287,6 +287,15 @@ public class MainView {
 		
 		mFileListText.setText(sb.toString());
 	}
+	
+	private void refreshReceiveListFileUI(){
+		StringBuffer sb = new StringBuffer("<html>将要接收的文件列表:<br/>");
+		for(FileModule module:mReceiveList){
+			sb.append(module.getName()).append("<br/> ");
+		}
+		sb.append("</html>");
+		mFileListText.setText(sb.toString());
+	}
 
 	protected void setHeadPanelEnable(boolean enable) {
 		if (enable) {
@@ -334,6 +343,8 @@ public class MainView {
 		}
 		
 		mStatusLabel.setText("接收文件"+mCurProgress+"/"+mTotal);
+		
+		refreshReceiveListFileUI();
 	}
 
 	public static void setPanelEnable(JPanel panel, boolean enable) {

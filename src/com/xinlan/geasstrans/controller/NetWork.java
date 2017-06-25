@@ -23,14 +23,19 @@ public class NetWork {
 	
 	private ServerSocket mServerSocket;
 	private Socket mSocket;
-	private INetWorkCallback mNetCallBack;
+	protected INetWorkCallback mNetCallBack;
 
 	private AtomicBoolean running = new AtomicBoolean(false);
 
 	protected List<FileModule> sendFileList = new ArrayList<FileModule>();
+	protected List<FileModule> receiveFileList = new ArrayList<FileModule>();
 	
 	private FileSendHandler fileSendHandler;
 	private FileReceiveHandler fileReceiveHandler;
+	
+	
+	private InputStream in;
+	private OutputStream out;
 	
 	public interface INetWorkCallback {
 		/**
@@ -74,40 +79,6 @@ public class NetWork {
 		}// end run
 	};
 
-	private Runnable mReceiveRunable = new Runnable() {
-		@Override
-		public void run() {
-			while (running.get()) {
-				try {
-					DataInputStream in = new DataInputStream(mSocket.getInputStream());
-					DataOutputStream out = new DataOutputStream(mSocket.getOutputStream());
-					System.out.println("启动输入监听线程.......");
-					byte mode = in.readByte();
-					System.out.println("read mode = "+mode);
-
-					if (mode == TransProtocol.CRL_CLOSE) {
-						onRemoteDisconnect();
-						break;
-					}
-
-					switch (mode) {
-					case TransProtocol.CRL_SEND:// send
-						if(fileReceiveHandler==null){
-							fileReceiveHandler = new FileReceiveHandler(in,out,mSocket,NetWork.this);
-						}
-						fileReceiveHandler.handleReceiveFiles();
-						break;
-					case TransProtocol.CRL_RECEIVE://receive
-						
-						break;
-					}// end switch
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}// end while
-		}// end run
-	};
-
 	public NetWork() {
 		mWorkStatus = WorkStaus.IDLE;
 	}
@@ -140,6 +111,13 @@ public class NetWork {
 	}
 
 	protected void establishConnection() {
+		try {
+			in = mSocket.getInputStream();
+			out  = mSocket.getOutputStream();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		if (mNetCallBack != null) {
 			mNetCallBack.onConnectSuccess(mSocket.getRemoteSocketAddress()
 					.toString());
@@ -226,17 +204,52 @@ public class NetWork {
 	 */
 	protected void doSendFileTask() {
 		try {
-			if(fileSendHandler==null){
-				DataInputStream in = new DataInputStream(mSocket.getInputStream());
-				DataOutputStream out = new DataOutputStream(mSocket.getOutputStream());
-				
-				fileSendHandler = new FileSendHandler(in,out,mSocket,this);
-			}
-			fileSendHandler.doSendFiles();
+			byte[] buf = new byte[2];
+			buf[0] = TransProtocol.CRL_REMOTE_SEND;
+			out.write(buf, 0, 2);
+			out.flush();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
+	
+	private Runnable mReceiveRunable = new Runnable() {
+		@Override
+		public void run() {
+			while (running.get()) {
+				try {
+					System.out.println("启动输入监听线程.......");
+					byte[] buf = new byte[2];
+					int ret = in.read(buf,0,2);
+					if(ret<0)
+						continue;
+					int mode = buf[0];
+					System.out.println("read mode = "+mode);
 
+					if (mode == TransProtocol.CRL_CLOSE) {
+						onRemoteDisconnect();
+						break;
+					}
+
+					switch (mode) {
+					case TransProtocol.CRL_REMOTE_SEND:// send 进入接收模式
+						if(fileReceiveHandler==null){
+							fileReceiveHandler = new FileReceiveHandler(in,out,mSocket,NetWork.this);
+						}
+						fileReceiveHandler.handleReceiveFiles();
+						break;
+					case TransProtocol.CRL_REMOTE_RECEIVE://receive 进入发送模式
+						if(fileSendHandler==null){
+							fileSendHandler = new FileSendHandler(in,out,mSocket,NetWork.this);
+						}
+						fileSendHandler.doSendFiles();
+						break;
+					}// end switch
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}// end while
+		}// end run
+	};
 
 }// end class
