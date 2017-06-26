@@ -21,6 +21,7 @@ import com.xinlan.geasstrans.controller.NetStatus;
 import com.xinlan.geasstrans.controller.NetWork;
 import com.xinlan.geasstrans.controller.NetWork.INetWorkCallback;
 import com.xinlan.geasstrans.controller.RWConfigFile;
+import com.xinlan.geasstrans.exception.FileTransException;
 import com.xinlan.geasstrans.model.AppConstants;
 import com.xinlan.geasstrans.model.FileBean;
 import com.xinlan.geasstrans.util.VersionUtil;
@@ -53,8 +54,6 @@ public class MainView {
 
 	private List<FileBean> mSelectedList = new ArrayList<FileBean>(10);
 	private List<FileBean> mReceiveList = new ArrayList<FileBean>();
-	private long mTotal = 0;
-	private long mCurProgress = 0;
 
 	private NetWork mNetWork;
 
@@ -64,7 +63,6 @@ public class MainView {
 
 	public void execute() {
 		initUI();
-
 		mNetWork = new NetWork();
 	}
 
@@ -74,7 +72,6 @@ public class MainView {
 			@Override
 			public void onConnectSuccess(String remote) {
 				// System.out.println(remote+"建立连接");
-				mStatusLabel.setText("与" + remote + "建立连接");
 				setPanelEnable(mBodyPanel, true);
 			}
 
@@ -83,14 +80,12 @@ public class MainView {
 				// System.out.println("连接失:"+e);
 				setHeadPanelEnable(true);
 				setPanelEnable(mBodyPanel, false);
-				mStatusLabel.setText("发生错误" + e);
 			}
 
 			@Override
 			public void onRemoteDisconnect() {
 				setHeadPanelEnable(true);
 				setPanelEnable(mBodyPanel, false);
-				mStatusLabel.setText("启动服务 等待连接...");
 			}
 
 			@Override
@@ -100,24 +95,30 @@ public class MainView {
 
 			@Override
 			public void onReceiveFilesComplete(List<FileBean> list) {
-				mStatusLabel.setText("空闲状态");
 				setPanelEnable(mBodyPanel, true);
+				
+				resetListUI();
 			}
 
 			@Override
 			public void onSendFilesComplete(List<FileBean> list) {
-				mStatusLabel.setText("空闲状态");
 				setPanelEnable(mBodyPanel, true);
+				
+				resetListUI();
 			}
 
 			@Override
 			public void onStatusChange(NetStatus fromStatus, NetStatus curStatus) {
-				
+				updateByStatus(curStatus);
 			}
 
 			@Override
-			public void onReceiveFileProgressUpdate(List<FileBean> list, String filename, long cur, long fileSize, long total, long progress,
-					boolean isSend) {
+			public void onFileProgressUpdate(FileBean fileBean, String filename, long cur, long fileSize, long total, long progress, boolean isSend) {
+				updateProgressUI(total, progress, filename);
+			}
+
+			@Override
+			public void onTransError(FileTransException e) {
 				
 			}
 		});
@@ -133,7 +134,6 @@ public class MainView {
 				// System.out.println("与服务端"+remote+"建立连接");
 				setHeadPanelEnable(false);
 				setPanelEnable(mBodyPanel, true);
-				mStatusLabel.setText("与服务端" + remote + "建立连接");
 			}
 
 			@Override
@@ -141,14 +141,12 @@ public class MainView {
 				// System.out.println("连接服务端失败 : "+e);
 				setHeadPanelEnable(true);
 				setPanelEnable(mBodyPanel, false);
-				mStatusLabel.setText("发生错误" + e);
 			}
 
 			@Override
 			public void onRemoteDisconnect() {
 				setHeadPanelEnable(true);
 				setPanelEnable(mBodyPanel, false);
-				mStatusLabel.setText("空闲状态");
 			}
 
 			@Override
@@ -158,27 +156,61 @@ public class MainView {
 
 			@Override
 			public void onReceiveFilesComplete(List<FileBean> list) {
-				mStatusLabel.setText("空闲状态");
-				setPanelEnable(mBodyPanel, true);
+				resetListUI();
 			}
 
 			@Override
 			public void onSendFilesComplete(List<FileBean> list) {
-				mStatusLabel.setText("空闲状态");
-				setPanelEnable(mBodyPanel, true);
+				resetListUI();
 			}
 
 			@Override
 			public void onStatusChange(NetStatus fromStatus, NetStatus curStatus) {
-				
+				updateByStatus(curStatus);
 			}
 
 			@Override
-			public void onReceiveFileProgressUpdate(List<FileBean> list, String filename, long cur, long fileSize, long total, long progress,
-					boolean isSend) {
+			public void onFileProgressUpdate(FileBean fileBean, String filename, long cur, long fileSize, long total, long progress, boolean isSend) {
+				updateProgressUI(total, progress, filename);
+			}
+
+			@Override
+			public void onTransError(FileTransException e) {
 				
 			}
 		});
+	}
+	
+	private void resetListUI(){
+		mReceiveList.clear();
+		refreshReceiveListFileUI();
+		
+		mSelectedList.clear();
+		refreshSendListFileUI();
+	}
+
+	private void updateProgressUI(long total, long curProgress, String filename) {
+		float progress = 100 * ((float) curProgress) / total;
+		mStatusLabel.setText(filename + ": " + String.format("%.2f", progress) + "%");
+	}
+
+	private void updateByStatus(NetStatus curStatus) {
+		switch (curStatus) {
+		case UNCONNECT:// 未连接状态
+			mStatusLabel.setText("未建立连接");
+			break;
+		case CONNECT:// 连接建立状态
+			mStatusLabel.setText("连接建立 等待任务");
+			break;
+		case SEND:// 发送状态
+			mStatusLabel.setText("发送文件");
+			break;
+		case RECEIVE:// 接收状态
+			mStatusLabel.setText("接收文件");
+			break;
+		default:
+			break;
+		}// end switch
 	}
 
 	private void initUI() {
@@ -242,6 +274,7 @@ public class MainView {
 
 		mSelectFileBtn = new JButton("选择文件");
 		mSendFileBtn = new JButton("发送文件");
+		mSendFileBtn.setVisible(false);
 		mCancelSendBtn = new JButton("取消选择");
 
 		mFileSelectPanel.add(mSelectFileBtn);
@@ -291,7 +324,7 @@ public class MainView {
 				addFileToTrans();
 			}
 		});
-		
+
 		mCancelSendBtn.addActionListener(new ActionListener() {// 取消选中的文件
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -299,7 +332,7 @@ public class MainView {
 				refreshSendListFileUI();
 			}
 		});
-		
+
 		mSendFileBtn.addActionListener(new ActionListener() {// 发送文件
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -307,34 +340,33 @@ public class MainView {
 			}
 		});
 	}
-	
+
 	/**
 	 * do send files
 	 */
-	private void doSendFiles(){
-		if(mSelectedList.size()==0)
+	private void doSendFiles() {
+		if (mSelectedList.size() == 0)
 			return;
-		
-		//setHeadPanelEnable(false);
+
+		// setHeadPanelEnable(false);
 		mCancelWorkBtn.setEnabled(false);
 		mNetWork.addSendTask(mSelectedList);
 	}
-	
-	private void refreshSendListFileUI(){
+
+	private void refreshSendListFileUI() {
 		StringBuffer sb = new StringBuffer("<html>");
-		
-		for(FileBean module:mSelectedList){
+		for (FileBean module : mSelectedList) {
 			sb.append(module.getPath()).append("<br/> ");
 		}
-		
 		sb.append("</html>");
-		
 		mFileListText.setText(sb.toString());
+
+		mSendFileBtn.setVisible(!(mSelectedList.size() == 0));
 	}
-	
-	private void refreshReceiveListFileUI(){
+
+	private void refreshReceiveListFileUI() {
 		StringBuffer sb = new StringBuffer("<html>将要接收的文件列表:<br/>");
-		for(FileBean module:mReceiveList){
+		for (FileBean module : mReceiveList) {
 			sb.append(module.getName()).append("<br/> ");
 		}
 		sb.append("</html>");
@@ -373,23 +405,15 @@ public class MainView {
 		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		chooser.showDialog(new JLabel(), "选择传输文件");
 		File selectFile = chooser.getSelectedFile();
-		//System.out.println("selectFile ---> "+selectFile.getAbsolutePath());
-		if(selectFile!=null){
+		// System.out.println("selectFile ---> "+selectFile.getAbsolutePath());
+		if (selectFile != null) {
 			mSelectedList.add(FileBean.create(selectFile.getAbsolutePath()));
 			refreshSendListFileUI();
 		}
 	}
-	
-	private void handleOnReceiveFilesInfo(List<FileBean> list){
+
+	private void handleOnReceiveFilesInfo(List<FileBean> list) {
 		mReceiveList.addAll(list);
-		
-		mTotal = 0;
-		for(FileBean m:mReceiveList){
-			mTotal+=m.getSize();
-		}
-		
-		mStatusLabel.setText("接收文件"+mCurProgress+"/"+mTotal);
-		
 		refreshReceiveListFileUI();
 	}
 

@@ -9,8 +9,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
-
 import com.alibaba.fastjson.JSON;
+import com.xinlan.geasstrans.controller.NetWork.INetWorkCallback;
+import com.xinlan.geasstrans.exception.FileTransException;
 import com.xinlan.geasstrans.model.FileBean;
 
 /**
@@ -24,43 +25,60 @@ public class FileSendHandler extends NetHandler {
 		super(in, out, sock, netWork);
 	}
 
-	public void doSendFiles() throws IOException {
-		netWork.changeStatus(NetStatus.SEND);
+	public void doSendFiles() throws FileTransException {
+		try {
+			netWork.changeStatus(NetStatus.SEND);
 
-		System.out.println("启动 文件发送功能...");
-		sendFilesHeadInfo();
+			System.out.println("启动 文件发送功能...");
 
-		DataInputStream dataInputStream = new DataInputStream(in);
-		DataOutputStream dataOutputStream = new DataOutputStream(out);
+			sendFilesHeadInfo();
 
-		sendFileList(netWork.sendFileList, dataInputStream, dataOutputStream);
+			DataInputStream dataInputStream = new DataInputStream(in);
+			DataOutputStream dataOutputStream = new DataOutputStream(out);
 
-		netWork.changeStatus(NetStatus.CONNECT);
-		
-		if (netWork.mNetCallBack != null) {
-			netWork.mNetCallBack.onSendFilesComplete(netWork.sendFileList);
+			sendFileList(netWork.sendFileList, dataInputStream, dataOutputStream);
+
+			netWork.changeStatus(NetStatus.CONNECT);
+
+			if (netWork.mNetCallBack != null) {
+				netWork.mNetCallBack.onSendFilesComplete(netWork.sendFileList);
+			}
+			netWork.sendFileList.clear();
+		} catch (Exception e) {
+			throw new FileTransException(e);
 		}
 	}
 
 	protected void sendFileList(List<FileBean> list, DataInputStream input, DataOutputStream output) throws IOException {
+		long total = getListTotalSize(list);
 		for (int i = 0; i < list.size(); i++) {
 			int index = input.readInt();
 			System.out.println("will send index = " + index);
 			String sendFileName = input.readUTF();
 			System.out.println("will send filename = " + sendFileName);
-			copyFileToRemote(output, list.get(i));
+
+			copyFileToRemote(output, list.get(i), total, getHasUpdateSize(list));
 		} // end for i
 	}
 
-	protected void copyFileToRemote(DataOutputStream output, final FileBean module) throws IOException {
+	protected void copyFileToRemote(DataOutputStream output, final FileBean module, long total, long hasSendSize) throws IOException {
 		System.out.println("start to copy  " + module.getName() + "...");
 		FileInputStream fis = null;
+
+		INetWorkCallback callback = netWork.mNetCallBack;
+
 		try {
 			int len;
 			byte[] buf = new byte[BUFFER_SIZE];
+			long current = 0;
 			fis = new FileInputStream(new File(module.getPath()));
 			while ((len = fis.read(buf, 0, BUFFER_SIZE)) != -1) {
 				output.write(buf, 0, len);
+				current += len;
+
+				if (callback != null) {
+					callback.onFileProgressUpdate(module, module.getName(), current, module.getSize(), total, hasSendSize + current, false);
+				}
 			} // end while
 			out.flush();
 		} finally {
@@ -70,7 +88,7 @@ public class FileSendHandler extends NetHandler {
 		System.out.println(" file " + module.getName() + "copy complete!");
 	}
 
-	protected void sendFilesHeadInfo() throws IOException {
+	protected void sendFilesHeadInfo() throws Exception {
 		String jsonStr = JSON.toJSONString(netWork.sendFileList);
 		System.out.println("send filehead infos = " + jsonStr);
 

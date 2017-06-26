@@ -7,4 +7,4 @@ public class VersionUtil {
 		return AppConstants.APP_NAME+"  v_"+AppConstants.VERSION+"."+AppConstants.SUB_VERSION;
 	}
 	
-}
+}//end class

@@ -9,5 +9,6 @@ public enum NetStatus {
 	UNCONNECT,
 	CONNECT,
 	SEND,
-	RECEIVE
+	RECEIVE,
+	ERROR
 }

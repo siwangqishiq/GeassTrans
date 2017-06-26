@@ -9,8 +9,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
-
 import com.alibaba.fastjson.JSONArray;
+import com.xinlan.geasstrans.controller.NetWork.INetWorkCallback;
+import com.xinlan.geasstrans.exception.FileTransException;
 import com.xinlan.geasstrans.model.FileBean;
 
 /**
@@ -26,47 +27,59 @@ public class FileReceiveHandler extends NetHandler {
 	}
 
 	public void handleReceiveFiles() throws Exception {
-		netWork.changeStatus(NetStatus.RECEIVE);
+		try {
+			netWork.changeStatus(NetStatus.RECEIVE);
 
-		System.out.println("启动 文件接收...");
-		sendCtlData(Protocol.CRL_REMOTE_RECEIVE);// 发送控制字段 让远端也进入文件接收模式
-		readFileHeadInfo();
+			System.out.println("启动 文件接收...");
+			sendCtlData(Protocol.CRL_REMOTE_RECEIVE);// 发送控制字段 让远端也进入文件接收模式
+			readFileHeadInfo();
 
-		// start to receive the file data
-		List<FileBean> list = netWork.receiveFileList;
-		DataInputStream dataInputStream = new DataInputStream(in);
-		DataOutputStream dataOutputStream = new DataOutputStream(out);
-		receiveFileList(list, dataInputStream, dataOutputStream);
+			// start to receive the file data
+			List<FileBean> list = netWork.receiveFileList;
+			DataInputStream dataInputStream = new DataInputStream(in);
+			DataOutputStream dataOutputStream = new DataOutputStream(out);
+			receiveFileList(list, dataInputStream, dataOutputStream);
 
-		// 接收文件成功
-		netWork.changeStatus(NetStatus.CONNECT);
-		
-		if (netWork.mNetCallBack != null) {
-			netWork.mNetCallBack.onReceiveFilesComplete(list);
+			// 接收文件成功
+			netWork.changeStatus(NetStatus.CONNECT);
+
+			if (netWork.mNetCallBack != null) {
+				netWork.mNetCallBack.onReceiveFilesComplete(list);
+			}
+			netWork.receiveFileList.clear();
+		} catch (Exception e) {
+			throw new FileTransException(e);
 		}
 	}
 
 	protected void receiveFileList(List<FileBean> list, DataInputStream input, DataOutputStream output) throws IOException {
+		long total = getListTotalSize(list);
 		for (int i = 0; i < list.size(); i++) {
 			output.writeInt(i);// index
 			output.writeUTF(list.get(i).getName());// filename
 			output.flush();
-			receiveFile(input, list.get(i));
+			receiveFile(input, list.get(i), total, getHasUpdateSize(list));
 		} // end for i
 	}
 
-	protected void receiveFile(DataInputStream input, final FileBean module) throws IOException {
+	protected void receiveFile(DataInputStream input, final FileBean module, long total, long hasGetSize) throws IOException {
 		System.out.println("start to recie file " + module.getName() + " ...");
 		FileOutputStream fos = null;
 		byte[] buf = new byte[BUFFER_SIZE];
 		int len;
 		long current = 0;
+
+		INetWorkCallback callback = netWork.mNetCallBack;
 		try {
 			fos = new FileOutputStream(new File(module.getName()));
 			while ((len = input.read(buf, 0, BUFFER_SIZE)) != -1) {
 				fos.write(buf, 0, len);
 				current += len;
-				System.out.println("receive " + current + " / " + module.getSize());
+				// System.out.println("receive " + current + " / " + module.getSize());
+				if (callback != null) {
+					callback.onFileProgressUpdate(module, module.getName(), current, module.getSize(), total, hasGetSize + current, false);
+				}
+
 				if (current >= module.getSize())// 文件已经接收完毕
 					break;
 			} // end while
@@ -75,6 +88,7 @@ public class FileReceiveHandler extends NetHandler {
 				fos.close();
 			}
 		}
+		module.setCurProgress(module.getSize());
 		System.out.println(module.getName() + " receive complete! ");
 	}
 

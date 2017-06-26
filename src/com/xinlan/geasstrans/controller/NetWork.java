@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.xinlan.geasstrans.exception.FileTransException;
 import com.xinlan.geasstrans.model.AppConstants;
 import com.xinlan.geasstrans.model.FileBean;
 
@@ -43,11 +44,13 @@ public class NetWork {
 		public void onReceiveFilesComplete(List<FileBean> list);// 接收文件成功
 
 		public void onSendFilesComplete(List<FileBean> list);// 发送文件成功
-		
-		public void onStatusChange(NetStatus fromStatus,NetStatus curStatus);//网络工作状态改变
 
-		public void onReceiveFileProgressUpdate(List<FileBean> list, String filename, long cur, 
-				long fileSize, long total, long progress,boolean isSend);//发送or接收进度回调
+		public void onStatusChange(NetStatus fromStatus, NetStatus curStatus);// 网络工作状态改变
+
+		public void onFileProgressUpdate(FileBean fileBean, String filename, long fileCurrent, long fileSize, long total, long progress,
+				boolean isSend);// 发送or接收进度回调
+
+		public void onTransError(FileTransException e);// 文件传输时发生异常
 	}// end interface
 
 	private Runnable mAcceptRunnable = new Runnable() {
@@ -58,6 +61,7 @@ public class NetWork {
 				establishConnection();
 			} catch (IOException e) {
 				e.printStackTrace();
+				changeStatus(NetStatus.UNCONNECT);
 				if (mNetCallBack != null) {
 					mNetCallBack.onConnectFail(e);
 				}
@@ -113,7 +117,6 @@ public class NetWork {
 
 		// mThreadPool.execute(mInputRunnable);
 		new Thread(mReceiveRunable).start();
-		;
 	}
 
 	/**
@@ -161,6 +164,7 @@ public class NetWork {
 		if (mNetCallBack != null) {
 			mNetCallBack.onRemoteDisconnect();
 		}
+		changeStatus(NetStatus.CONNECT);
 	}
 
 	public void setNetWorkAction(INetWorkCallback callback) {
@@ -198,17 +202,13 @@ public class NetWork {
 			e.printStackTrace();
 		}
 	}
-	
-	public void changeStatus(NetStatus status){
-		if(this.mStatus == status){
-			return;
-		}
-		
+
+	public void changeStatus(NetStatus status) {
 		NetStatus fromeStatus = mStatus;
 		mStatus = status;
-		if(mNetCallBack!=null){
+		if (mNetCallBack != null) {
 			mNetCallBack.onStatusChange(fromeStatus, mStatus);
-		}//end if
+		} // end if
 	}
 
 	private Runnable mReceiveRunable = new Runnable() {
@@ -243,8 +243,12 @@ public class NetWork {
 						fileSendHandler.doSendFiles();
 						break;
 					}// end switch
+				}catch(FileTransException e){
+					e.printStackTrace();
+					mNetCallBack.onTransError(e);
 				} catch (Exception e) {
 					e.printStackTrace();
+					changeStatus(NetStatus.CONNECT);
 				}
 			} // end while
 		}// end run

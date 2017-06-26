@@ -10,7 +10,7 @@ import java.io.File;
 public class FileBean {
 	@Override
 	public String toString() {
-		return "FileModule [path=" + path + ", name=" + name + ", size=" + size
+		return "FileBean [path=" + path + ", name=" + name + ", size=" + size
 				+ ", curProgress=" + curProgress + "]";
 	}
 
