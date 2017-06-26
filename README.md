@@ -1,5 +1,5 @@
 # GeassTrans
-GeassTrans  PC与Mac主机之间互传文件
+###GeassTrans  PC与Mac主机之间互传文件
 
 
 #晴雯歌
