@@ -7,7 +7,7 @@ import java.io.File;
  * @author panyi
  *
  */
-public class FileModule {
+public class FileBean {
 	@Override
 	public String toString() {
 		return "FileModule [path=" + path + ", name=" + name + ", size=" + size
@@ -44,9 +44,9 @@ public class FileModule {
 		this.curProgress = curProgress;
 	}
 	
-	public static FileModule create(final String path){
+	public static FileBean create(final String path){
 		File file = new File(path);
-		FileModule module = new FileModule();
+		FileBean module = new FileBean();
 		module.setPath(file.getAbsolutePath());
 		module.setCurProgress(0);
 		module.setName(file.getName());

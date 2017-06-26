@@ -1,6 +1,6 @@
 package com.xinlan.geasstrans.controller;
 
-public class TransProtocol {
+public class Protocol {
 	public static final byte CRL_CLOSE = 1;//控制字段 关闭链接
 	public static final byte CRL_REMOTE_SEND = 2;//控制字段  文件发送
 	public static final byte CRL_REMOTE_RECEIVE = 3;//控制字段  接收文件

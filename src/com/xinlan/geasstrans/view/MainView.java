@@ -9,7 +9,6 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -18,12 +17,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-
+import com.xinlan.geasstrans.controller.NetStatus;
 import com.xinlan.geasstrans.controller.NetWork;
 import com.xinlan.geasstrans.controller.NetWork.INetWorkCallback;
 import com.xinlan.geasstrans.controller.RWConfigFile;
 import com.xinlan.geasstrans.model.AppConstants;
-import com.xinlan.geasstrans.model.FileModule;
+import com.xinlan.geasstrans.model.FileBean;
 import com.xinlan.geasstrans.util.VersionUtil;
 
 public class MainView {
@@ -52,8 +51,8 @@ public class MainView {
 
 	protected JLabel mStatusLabel;
 
-	private List<FileModule> mSelectedList = new ArrayList<FileModule>(10);
-	private List<FileModule> mReceiveList = new ArrayList<FileModule>();
+	private List<FileBean> mSelectedList = new ArrayList<FileBean>(10);
+	private List<FileBean> mReceiveList = new ArrayList<FileBean>();
 	private long mTotal = 0;
 	private long mCurProgress = 0;
 
@@ -95,8 +94,31 @@ public class MainView {
 			}
 
 			@Override
-			public void onReceiveFilesInfoList(List<FileModule> receiveList) {
+			public void onReceiveFilesInfoList(List<FileBean> receiveList) {
 				handleOnReceiveFilesInfo(receiveList);
+			}
+
+			@Override
+			public void onReceiveFilesComplete(List<FileBean> list) {
+				mStatusLabel.setText("空闲状态");
+				setPanelEnable(mBodyPanel, true);
+			}
+
+			@Override
+			public void onSendFilesComplete(List<FileBean> list) {
+				mStatusLabel.setText("空闲状态");
+				setPanelEnable(mBodyPanel, true);
+			}
+
+			@Override
+			public void onStatusChange(NetStatus fromStatus, NetStatus curStatus) {
+				
+			}
+
+			@Override
+			public void onReceiveFileProgressUpdate(List<FileBean> list, String filename, long cur, long fileSize, long total, long progress,
+					boolean isSend) {
+				
 			}
 		});
 
@@ -106,7 +128,6 @@ public class MainView {
 	private void asClient() {
 		String serverIp = mServerIPText.getText().trim();
 		mNetWork.startConnect(serverIp, new INetWorkCallback() {
-
 			@Override
 			public void onConnectSuccess(String remote) {
 				// System.out.println("与服务端"+remote+"建立连接");
@@ -131,8 +152,31 @@ public class MainView {
 			}
 
 			@Override
-			public void onReceiveFilesInfoList(List<FileModule> receiveList) {
+			public void onReceiveFilesInfoList(List<FileBean> receiveList) {
 				handleOnReceiveFilesInfo(receiveList);
+			}
+
+			@Override
+			public void onReceiveFilesComplete(List<FileBean> list) {
+				mStatusLabel.setText("空闲状态");
+				setPanelEnable(mBodyPanel, true);
+			}
+
+			@Override
+			public void onSendFilesComplete(List<FileBean> list) {
+				mStatusLabel.setText("空闲状态");
+				setPanelEnable(mBodyPanel, true);
+			}
+
+			@Override
+			public void onStatusChange(NetStatus fromStatus, NetStatus curStatus) {
+				
+			}
+
+			@Override
+			public void onReceiveFileProgressUpdate(List<FileBean> list, String filename, long cur, long fileSize, long total, long progress,
+					boolean isSend) {
+				
 			}
 		});
 	}
@@ -279,7 +323,7 @@ public class MainView {
 	private void refreshSendListFileUI(){
 		StringBuffer sb = new StringBuffer("<html>");
 		
-		for(FileModule module:mSelectedList){
+		for(FileBean module:mSelectedList){
 			sb.append(module.getPath()).append("<br/> ");
 		}
 		
@@ -290,7 +334,7 @@ public class MainView {
 	
 	private void refreshReceiveListFileUI(){
 		StringBuffer sb = new StringBuffer("<html>将要接收的文件列表:<br/>");
-		for(FileModule module:mReceiveList){
+		for(FileBean module:mReceiveList){
 			sb.append(module.getName()).append("<br/> ");
 		}
 		sb.append("</html>");
@@ -330,15 +374,17 @@ public class MainView {
 		chooser.showDialog(new JLabel(), "选择传输文件");
 		File selectFile = chooser.getSelectedFile();
 		//System.out.println("selectFile ---> "+selectFile.getAbsolutePath());
-		mSelectedList.add(FileModule.create(selectFile.getAbsolutePath()));
-		refreshSendListFileUI();
+		if(selectFile!=null){
+			mSelectedList.add(FileBean.create(selectFile.getAbsolutePath()));
+			refreshSendListFileUI();
+		}
 	}
 	
-	private void handleOnReceiveFilesInfo(List<FileModule> list){
+	private void handleOnReceiveFilesInfo(List<FileBean> list){
 		mReceiveList.addAll(list);
 		
 		mTotal = 0;
-		for(FileModule m:mReceiveList){
+		for(FileBean m:mReceiveList){
 			mTotal+=m.getSize();
 		}
 		

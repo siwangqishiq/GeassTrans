@@ -1,7 +1,5 @@
 package com.xinlan.geasstrans.controller;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -9,59 +7,47 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.alibaba.fastjson.JSON;
 import com.xinlan.geasstrans.model.AppConstants;
-import com.xinlan.geasstrans.model.FileModule;
+import com.xinlan.geasstrans.model.FileBean;
 
 public class NetWork {
 	private WorkStaus mWorkStatus = WorkStaus.IDLE;
 	private NetStatus mStatus = NetStatus.UNCONNECT;
-	
+
 	private ServerSocket mServerSocket;
 	private Socket mSocket;
 	protected INetWorkCallback mNetCallBack;
 
 	private AtomicBoolean running = new AtomicBoolean(false);
 
-	protected List<FileModule> sendFileList = new ArrayList<FileModule>();
-	protected List<FileModule> receiveFileList = new ArrayList<FileModule>();
-	
+	protected List<FileBean> sendFileList = new ArrayList<FileBean>();
+	protected List<FileBean> receiveFileList = new ArrayList<FileBean>();
+
 	private FileSendHandler fileSendHandler;
 	private FileReceiveHandler fileReceiveHandler;
-	
-	
+
 	private InputStream in;
 	private OutputStream out;
-	
+
 	public interface INetWorkCallback {
-		/**
-		 * 链接成功建立
-		 * 
-		 * @param remote
-		 */
-		public void onConnectSuccess(final String remote);
+		public void onConnectSuccess(final String remote);// 链接成功建立
 
-		/**
-		 * 链接建立失败
-		 * 
-		 * @param e
-		 */
-		public void onConnectFail(Exception e);
+		public void onConnectFail(Exception e);// 链接建立失败
 
-		/**
-		 * 与远程的链接断开
-		 */
-		public void onRemoteDisconnect();
+		public void onRemoteDisconnect();// 与远程的链接断开
+
+		public void onReceiveFilesInfoList(List<FileBean> receiveList);
+
+		public void onReceiveFilesComplete(List<FileBean> list);// 接收文件成功
+
+		public void onSendFilesComplete(List<FileBean> list);// 发送文件成功
 		
-		/**
-		 * 
-		 * @param receiveList
-		 */
-		public void onReceiveFilesInfoList(List<FileModule> receiveList);
+		public void onStatusChange(NetStatus fromStatus,NetStatus curStatus);//网络工作状态改变
+
+		public void onReceiveFileProgressUpdate(List<FileBean> list, String filename, long cur, 
+				long fileSize, long total, long progress,boolean isSend);//发送or接收进度回调
 	}// end interface
 
 	private Runnable mAcceptRunnable = new Runnable() {
@@ -87,7 +73,7 @@ public class NetWork {
 		setNetWorkAction(callback);
 		try {
 			mServerSocket = new ServerSocket(AppConstants.SERVER_PORT);
-			//mThreadPool.execute(mAcceptRunnable);
+			// mThreadPool.execute(mAcceptRunnable);
 			new Thread(mAcceptRunnable).start();
 			mWorkStatus = WorkStaus.SERVER;
 		} catch (IOException e) {
@@ -113,21 +99,21 @@ public class NetWork {
 	protected void establishConnection() {
 		try {
 			in = mSocket.getInputStream();
-			out  = mSocket.getOutputStream();
+			out = mSocket.getOutputStream();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		if (mNetCallBack != null) {
-			mNetCallBack.onConnectSuccess(mSocket.getRemoteSocketAddress()
-					.toString());
+			mNetCallBack.onConnectSuccess(mSocket.getRemoteSocketAddress().toString());
 		}
 
-		mStatus = NetStatus.CONNECT;
+		changeStatus(NetStatus.CONNECT);
 		running.set(true);
 
-		//mThreadPool.execute(mInputRunnable);
-		new Thread(mReceiveRunable).start();;
+		// mThreadPool.execute(mInputRunnable);
+		new Thread(mReceiveRunable).start();
+		;
 	}
 
 	/**
@@ -136,7 +122,7 @@ public class NetWork {
 	public void disConnection() {
 		try {
 			byte[] buf = new byte[1];
-			buf[0] = TransProtocol.CRL_CLOSE;
+			buf[0] = Protocol.CRL_CLOSE;
 			OutputStream out = mSocket.getOutputStream();
 			out.write(buf);
 			out.flush();
@@ -147,7 +133,7 @@ public class NetWork {
 		closeNetWork();
 
 		running.set(false);
-		mStatus = NetStatus.UNCONNECT;
+		changeStatus(NetStatus.UNCONNECT);
 		mWorkStatus = WorkStaus.IDLE;
 	}
 
@@ -186,12 +172,12 @@ public class NetWork {
 	 * 
 	 * @param list
 	 */
-	public void addSendTask(List<FileModule> list) {
+	public void addSendTask(List<FileBean> list) {
 		if (mStatus != NetStatus.CONNECT)
 			return;
 
 		sendFileList.addAll(list);
-		new Thread(new Runnable(){
+		new Thread(new Runnable() {
 			@Override
 			public void run() {
 				doSendFileTask();
@@ -205,7 +191,7 @@ public class NetWork {
 	protected void doSendFileTask() {
 		try {
 			byte[] buf = new byte[2];
-			buf[0] = TransProtocol.CRL_REMOTE_SEND;
+			buf[0] = Protocol.CRL_REMOTE_SEND;
 			out.write(buf, 0, 2);
 			out.flush();
 		} catch (Exception e) {
@@ -213,6 +199,18 @@ public class NetWork {
 		}
 	}
 	
+	public void changeStatus(NetStatus status){
+		if(this.mStatus == status){
+			return;
+		}
+		
+		NetStatus fromeStatus = mStatus;
+		mStatus = status;
+		if(mNetCallBack!=null){
+			mNetCallBack.onStatusChange(fromeStatus, mStatus);
+		}//end if
+	}
+
 	private Runnable mReceiveRunable = new Runnable() {
 		@Override
 		public void run() {
@@ -220,27 +218,27 @@ public class NetWork {
 				try {
 					System.out.println("启动输入监听线程.......");
 					byte[] buf = new byte[2];
-					int ret = in.read(buf,0,2);
-					if(ret<0)
+					int ret = in.read(buf, 0, 2);
+					if (ret < 0)
 						continue;
 					int mode = buf[0];
-					System.out.println("read mode = "+mode);
+					System.out.println("read mode = " + mode);
 
-					if (mode == TransProtocol.CRL_CLOSE) {
+					if (mode == Protocol.CRL_CLOSE) {
 						onRemoteDisconnect();
 						break;
 					}
 
 					switch (mode) {
-					case TransProtocol.CRL_REMOTE_SEND:// send 进入接收模式
-						if(fileReceiveHandler==null){
-							fileReceiveHandler = new FileReceiveHandler(in,out,mSocket,NetWork.this);
+					case Protocol.CRL_REMOTE_SEND:// send 进入接收模式
+						if (fileReceiveHandler == null) {
+							fileReceiveHandler = new FileReceiveHandler(in, out, mSocket, NetWork.this);
 						}
 						fileReceiveHandler.handleReceiveFiles();
 						break;
-					case TransProtocol.CRL_REMOTE_RECEIVE://receive 进入发送模式
-						if(fileSendHandler==null){
-							fileSendHandler = new FileSendHandler(in,out,mSocket,NetWork.this);
+					case Protocol.CRL_REMOTE_RECEIVE:// receive 进入发送模式
+						if (fileSendHandler == null) {
+							fileSendHandler = new FileSendHandler(in, out, mSocket, NetWork.this);
 						}
 						fileSendHandler.doSendFiles();
 						break;
@@ -248,7 +246,7 @@ public class NetWork {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-			}// end while
+			} // end while
 		}// end run
 	};
 
