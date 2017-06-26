@@ -77,7 +77,8 @@ public class FileReceiveHandler extends NetHandler {
 				current += len;
 				// System.out.println("receive " + current + " / " + module.getSize());
 				if (callback != null) {
-					callback.onFileProgressUpdate(module, module.getName(), current, module.getSize(), total, hasGetSize + current, false);
+					//System.out.println("文件 = " + current + "  /" + module.getSize() + "    总的 " + total + " / " + (hasGetSize + current));
+					callback.onFileProgressUpdate(module, module.getName(), current, module.getSize(), hasGetSize + current, total, false);
 				}
 
 				if (current >= module.getSize())// 文件已经接收完毕

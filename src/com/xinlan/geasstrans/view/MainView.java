@@ -2,6 +2,8 @@ package com.xinlan.geasstrans.view;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -9,12 +11,15 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import com.xinlan.geasstrans.controller.NetStatus;
@@ -29,7 +34,7 @@ import com.xinlan.geasstrans.util.VersionUtil;
 public class MainView {
 
 	public static final int VIEW_WIDTH = 500;
-	public static final int VIEW_HEIGHT = 800;
+	public static final int VIEW_HEIGHT = 400;
 
 	public static final int PADDING = 10;
 
@@ -44,13 +49,13 @@ public class MainView {
 	protected JPanel mBodyPanel;
 
 	protected JPanel mFileSelectPanel;
-	protected JScrollPane mFileListScrollPanel;
 	protected JLabel mFileListText;
 	protected JButton mSelectFileBtn;
 	protected JButton mSendFileBtn;
 	protected JButton mCancelSendBtn;
 
 	protected JLabel mStatusLabel;
+	protected JProgressBar mProgressBar;
 
 	private List<FileBean> mSelectedList = new ArrayList<FileBean>(10);
 	private List<FileBean> mReceiveList = new ArrayList<FileBean>();
@@ -96,14 +101,14 @@ public class MainView {
 			@Override
 			public void onReceiveFilesComplete(List<FileBean> list) {
 				setPanelEnable(mBodyPanel, true);
-				
+
 				resetListUI();
 			}
 
 			@Override
 			public void onSendFilesComplete(List<FileBean> list) {
 				setPanelEnable(mBodyPanel, true);
-				
+
 				resetListUI();
 			}
 
@@ -114,12 +119,12 @@ public class MainView {
 
 			@Override
 			public void onFileProgressUpdate(FileBean fileBean, String filename, long cur, long fileSize, long total, long progress, boolean isSend) {
-				updateProgressUI(total, progress, filename);
+				updateProgressUI(fileSize, cur, total, progress, filename, isSend ? "接收文件" : "发送文件");
 			}
 
 			@Override
 			public void onTransError(FileTransException e) {
-				
+
 			}
 		});
 
@@ -170,28 +175,33 @@ public class MainView {
 			}
 
 			@Override
-			public void onFileProgressUpdate(FileBean fileBean, String filename, long cur, long fileSize, long total, long progress, boolean isSend) {
-				updateProgressUI(total, progress, filename);
+			public void onFileProgressUpdate(FileBean fileBean, String filename, long cur, long fileSize, long progress, long total, boolean isSend) {
+				updateProgressUI(fileSize, cur, progress, total, filename, isSend ? "接收文件" : "发送文件");
 			}
 
 			@Override
 			public void onTransError(FileTransException e) {
-				
+
 			}
 		});
 	}
-	
-	private void resetListUI(){
+
+	private void resetListUI() {
 		mReceiveList.clear();
 		refreshReceiveListFileUI();
-		
+
 		mSelectedList.clear();
 		refreshSendListFileUI();
+		
+		mProgressBar.setValue(0);
 	}
 
-	private void updateProgressUI(long total, long curProgress, String filename) {
+	private void updateProgressUI(long thisFileTotal, long thisFileCurrent,long curProgress, long total, String filename, String prefix) {
+		float fileProgress = 100 * ((float) thisFileCurrent) / thisFileTotal;
+		mStatusLabel.setText(prefix + filename + ": " + String.format("%.2f", fileProgress) + "%");
+
 		float progress = 100 * ((float) curProgress) / total;
-		mStatusLabel.setText(filename + ": " + String.format("%.2f", progress) + "%");
+		mProgressBar.setValue((int) progress);
 	}
 
 	private void updateByStatus(NetStatus curStatus) {
@@ -231,7 +241,7 @@ public class MainView {
 		addListener();
 
 		mMainFrame.setVisible(true);
-		mMainFrame.setResizable(false);
+		// mMainFrame.setResizable(false);
 
 		setPanelEnable(mBodyPanel, false);
 	}
@@ -239,7 +249,7 @@ public class MainView {
 	private void initHeadUI() {
 		mHeadPanel = new JPanel();
 		mHeadPanel.setLayout(new BorderLayout());
-		mServerIPText = new JTextField();
+		mServerIPText = new JTextField(20);
 		mServerIPText.setText(RWConfigFile.readKey(AppConstants.LAST_CONNECT_ADDRESS));
 		mHeadPanel.add(mServerIPText, BorderLayout.CENTER);
 
@@ -251,7 +261,6 @@ public class MainView {
 		mCancelWorkBtn = new JButton("断开连接");
 		headBtnsPanel.add(mCancelWorkBtn);
 		mCancelWorkBtn.setVisible(false);
-
 		mHeadPanel.add(headBtnsPanel, BorderLayout.EAST);
 
 		mMainFrame.add(mHeadPanel, BorderLayout.NORTH);
@@ -269,7 +278,6 @@ public class MainView {
 		mBodyPanel.add(mFileSelectPanel);
 
 		mFileListText = new JLabel();
-		mFileListScrollPanel = new JScrollPane(mFileListText);
 		mFileSelectPanel.add(mFileListText);
 
 		mSelectFileBtn = new JButton("选择文件");
@@ -282,8 +290,16 @@ public class MainView {
 		mFileSelectPanel.add(mCancelSendBtn);
 
 		mStatusLabel = new JLabel();
+		mStatusLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 10));
 		mStatusLabel.setText("未连接");
 		mBodyPanel.add(mStatusLabel);
+
+		mProgressBar = new JProgressBar();
+		mProgressBar.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+		mBodyPanel.add(mProgressBar);
+		mProgressBar.setMinimum(0);
+		mProgressBar.setMaximum(100);
+		mProgressBar.setValue(0);
 	}
 
 	private void addListener() {
@@ -349,7 +365,7 @@ public class MainView {
 			return;
 
 		// setHeadPanelEnable(false);
-		mCancelWorkBtn.setEnabled(false);
+		//mCancelWorkBtn.setEnabled(false);
 		mNetWork.addSendTask(mSelectedList);
 	}
 

@@ -77,14 +77,15 @@ public class FileSendHandler extends NetHandler {
 				current += len;
 
 				if (callback != null) {
-					callback.onFileProgressUpdate(module, module.getName(), current, module.getSize(), total, hasSendSize + current, false);
+					//System.out.println("文件 = " + current + "  /" + module.getSize() + "    总的 " + total + " / " + (hasSendSize + current));
+					callback.onFileProgressUpdate(module, module.getName(), current, module.getSize(), hasSendSize + current, total, false);
 				}
 			} // end while
 			out.flush();
 		} finally {
 			fis.close();
 		}
-
+		module.setCurProgress(module.getSize());
 		System.out.println(" file " + module.getName() + "copy complete!");
 	}
 

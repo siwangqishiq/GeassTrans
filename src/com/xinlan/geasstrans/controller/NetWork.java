@@ -47,7 +47,7 @@ public class NetWork {
 
 		public void onStatusChange(NetStatus fromStatus, NetStatus curStatus);// 网络工作状态改变
 
-		public void onFileProgressUpdate(FileBean fileBean, String filename, long fileCurrent, long fileSize, long total, long progress,
+		public void onFileProgressUpdate(FileBean fileBean, String filename, long fileCurrent, long fileSize, long progress, long total,
 				boolean isSend);// 发送or接收进度回调
 
 		public void onTransError(FileTransException e);// 文件传输时发生异常
@@ -244,10 +244,10 @@ public class NetWork {
 						break;
 					}// end switch
 				}catch(FileTransException e){
-					e.printStackTrace();
+					//e.printStackTrace();
 					mNetCallBack.onTransError(e);
 				} catch (Exception e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 					changeStatus(NetStatus.CONNECT);
 				}
 			} // end while
