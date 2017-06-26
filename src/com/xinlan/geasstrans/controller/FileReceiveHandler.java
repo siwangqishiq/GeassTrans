@@ -100,7 +100,7 @@ public class FileReceiveHandler extends NetHandler {
 		if (len < 0)
 			throw new Exception("receive file info data error");
 
-		String headInfoStr = new String(buffer, 0, len);
+		String headInfoStr = new String(buffer, 0, len,"utf-8");
 		System.out.println("receive head Info = " + headInfoStr);
 
 		netWork.receiveFileList = JSONArray.parseArray(headInfoStr, FileBean.class);

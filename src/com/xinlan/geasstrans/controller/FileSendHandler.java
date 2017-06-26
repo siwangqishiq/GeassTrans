@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.charset.Charset;
 import java.util.List;
 import com.alibaba.fastjson.JSON;
 import com.xinlan.geasstrans.controller.NetWork.INetWorkCallback;
@@ -30,9 +31,7 @@ public class FileSendHandler extends NetHandler {
 			netWork.changeStatus(NetStatus.SEND);
 
 			System.out.println("启动 文件发送功能...");
-
 			sendFilesHeadInfo();
-
 			DataInputStream dataInputStream = new DataInputStream(in);
 			DataOutputStream dataOutputStream = new DataOutputStream(out);
 
@@ -93,8 +92,8 @@ public class FileSendHandler extends NetHandler {
 		String jsonStr = JSON.toJSONString(netWork.sendFileList);
 		System.out.println("send filehead infos = " + jsonStr);
 
-		byte[] willSendData = jsonStr.getBytes();
-		byte[] buffer = new byte[willSendData.length + 1];
+		byte[] willSendData = jsonStr.getBytes("utf-8");
+		byte[] buffer = new byte[willSendData.length];
 
 		// copy
 		System.arraycopy(willSendData, 0, buffer, 0, willSendData.length);

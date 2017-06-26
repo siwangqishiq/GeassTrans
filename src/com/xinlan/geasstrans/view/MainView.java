@@ -29,6 +29,7 @@ import com.xinlan.geasstrans.controller.RWConfigFile;
 import com.xinlan.geasstrans.exception.FileTransException;
 import com.xinlan.geasstrans.model.AppConstants;
 import com.xinlan.geasstrans.model.FileBean;
+import com.xinlan.geasstrans.util.FileUtil;
 import com.xinlan.geasstrans.util.VersionUtil;
 
 public class MainView {
@@ -372,7 +373,9 @@ public class MainView {
 	private void refreshSendListFileUI() {
 		StringBuffer sb = new StringBuffer("<html>");
 		for (FileBean module : mSelectedList) {
-			sb.append(module.getPath()).append("<br/> ");
+			sb.append(module.getPath()).
+			append("    "+FileUtil.convertFileSize(module.getSize())).
+			append("<br/> ");
 		}
 		sb.append("</html>");
 		mFileListText.setText(sb.toString());
