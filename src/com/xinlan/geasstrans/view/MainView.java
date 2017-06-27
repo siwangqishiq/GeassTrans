@@ -193,11 +193,11 @@ public class MainView {
 
 		mSelectedList.clear();
 		refreshSendListFileUI();
-		
+
 		mProgressBar.setValue(0);
 	}
 
-	private void updateProgressUI(long thisFileTotal, long thisFileCurrent,long curProgress, long total, String filename, String prefix) {
+	private void updateProgressUI(long thisFileTotal, long thisFileCurrent, long curProgress, long total, String filename, String prefix) {
 		float fileProgress = 100 * ((float) thisFileCurrent) / thisFileTotal;
 		mStatusLabel.setText(prefix + filename + ": " + String.format("%.2f", fileProgress) + "%");
 
@@ -366,30 +366,17 @@ public class MainView {
 			return;
 
 		// setHeadPanelEnable(false);
-		//mCancelWorkBtn.setEnabled(false);
+		// mCancelWorkBtn.setEnabled(false);
 		mNetWork.addSendTask(mSelectedList);
 	}
 
 	private void refreshSendListFileUI() {
-		StringBuffer sb = new StringBuffer("<html>");
-		for (FileBean module : mSelectedList) {
-			sb.append(module.getPath()).
-			append("    "+FileUtil.convertFileSize(module.getSize())).
-			append("<br/> ");
-		}
-		sb.append("</html>");
-		mFileListText.setText(sb.toString());
-
+		ViewHelper.refresViewList(mFileListText, mSelectedList, true);
 		mSendFileBtn.setVisible(!(mSelectedList.size() == 0));
 	}
 
 	private void refreshReceiveListFileUI() {
-		StringBuffer sb = new StringBuffer("<html>将要接收的文件列表:<br/>");
-		for (FileBean module : mReceiveList) {
-			sb.append(module.getName()).append("<br/> ");
-		}
-		sb.append("</html>");
-		mFileListText.setText(sb.toString());
+		ViewHelper.refresViewList(mFileListText, mReceiveList, false);
 	}
 
 	protected void setHeadPanelEnable(boolean enable) {
@@ -422,12 +409,24 @@ public class MainView {
 	private void addFileToTrans() {
 		JFileChooser chooser = new JFileChooser();
 		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+		String lastOpenDir = RWConfigFile.readKey(AppConstants.LAST_OPEN_FOLDER);
+		if (lastOpenDir != null) {
+			File dir = new File(lastOpenDir);
+			if (dir.exists()) {
+				chooser.setCurrentDirectory(dir);
+			}
+		}
+
 		chooser.showDialog(new JLabel(), "选择传输文件");
+
 		File selectFile = chooser.getSelectedFile();
 		// System.out.println("selectFile ---> "+selectFile.getAbsolutePath());
 		if (selectFile != null) {
 			mSelectedList.add(FileBean.create(selectFile.getAbsolutePath()));
 			refreshSendListFileUI();
+
+			RWConfigFile.writeKey(AppConstants.LAST_OPEN_FOLDER, selectFile.getParent());
 		}
 	}
 
