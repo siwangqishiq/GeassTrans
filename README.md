@@ -4,7 +4,6 @@
 
 
 
-images: 
 ![alt text](https://github.com/siwangqishiq/GeassTrans/blob/master/extra/main.png "main")
 
 ![alt text](https://github.com/siwangqishiq/GeassTrans/blob/master/extra/send.png "work")
