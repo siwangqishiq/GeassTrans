@@ -65,14 +65,14 @@ public class FileReceiveHandler extends NetHandler {
 	protected void receiveFile(DataInputStream input, final FileBean module, long total, long hasGetSize) throws IOException {
 		System.out.println("start to recie file " + module.getName() + " ...");
 		FileOutputStream fos = null;
-		byte[] buf = new byte[BUFFER_SIZE];
+		byte[] buf = new byte[FILE_BUFFER_SIZE];
 		int len;
 		long current = 0;
 
 		INetWorkCallback callback = netWork.mNetCallBack;
 		try {
 			fos = new FileOutputStream(new File(module.getName()));
-			while ((len = input.read(buf, 0, BUFFER_SIZE)) != -1) {
+			while ((len = input.read(buf, 0, FILE_BUFFER_SIZE)) != -1) {
 				fos.write(buf, 0, len);
 				current += len;
 				// System.out.println("receive " + current + " / " + module.getSize());

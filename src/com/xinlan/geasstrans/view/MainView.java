@@ -425,7 +425,8 @@ public class MainView {
 		if (selectFile != null) {
 			mSelectedList.add(FileBean.create(selectFile.getAbsolutePath()));
 			refreshSendListFileUI();
-
+			
+			 System.out.println("writeKey ---> "+selectFile.getParent());
 			RWConfigFile.writeKey(AppConstants.LAST_OPEN_FOLDER, selectFile.getParent());
 		}
 	}

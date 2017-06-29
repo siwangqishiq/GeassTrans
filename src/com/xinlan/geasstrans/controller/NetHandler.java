@@ -11,6 +11,8 @@ import com.xinlan.geasstrans.model.FileBean;
 public class NetHandler {
 	public static final int BUFFER_SIZE = 20 * 1024;// 20k
 
+	public static final int FILE_BUFFER_SIZE = 1024 * 1024;// 1M
+
 	protected InputStream in;
 	protected OutputStream out;
 	protected NetWork netWork;
@@ -39,7 +41,7 @@ public class NetHandler {
 		} // end for each
 		return totalSize;
 	}
-	
+
 	public static long getHasUpdateSize(List<FileBean> list) {
 		if (list == null)
 			return 0;

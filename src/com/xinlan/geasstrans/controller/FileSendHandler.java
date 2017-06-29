@@ -68,10 +68,10 @@ public class FileSendHandler extends NetHandler {
 
 		try {
 			int len;
-			byte[] buf = new byte[BUFFER_SIZE];
+			byte[] buf = new byte[FILE_BUFFER_SIZE];
 			long current = 0;
 			fis = new FileInputStream(new File(module.getPath()));
-			while ((len = fis.read(buf, 0, BUFFER_SIZE)) != -1) {
+			while ((len = fis.read(buf, 0, FILE_BUFFER_SIZE)) != -1) {
 				output.write(buf, 0, len);
 				current += len;
 

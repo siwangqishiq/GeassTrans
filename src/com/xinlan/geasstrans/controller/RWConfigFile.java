@@ -23,7 +23,7 @@ public class RWConfigFile {
 		try {
 			fis = new FileInputStream(getConfigFile());
 			prop.load(fis);
-			
+
 			value = prop.getProperty(key);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -37,21 +37,23 @@ public class RWConfigFile {
 
 	public static void writeKey(String key, String value) {
 		Properties prop = new Properties();
-		FileOutputStream oFile = null;
-		prop.setProperty(key, value);
+		FileInputStream fis = null;
+		FileOutputStream fos = null;
 		try {
-			oFile = new FileOutputStream(getConfigFile());
-			prop.store(oFile, "add");
+			fis = new FileInputStream(getConfigFile());
+			prop.load(fis);
+			prop.setProperty(key, value);
+			fos = new FileOutputStream(getConfigFile());
+			prop.store(fos, "add");
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
-			closeStreamSlient(oFile);
 		}
 	}
-	
-	private static File getConfigFile() throws IOException{
+
+	private static File getConfigFile() throws IOException {
 		File file = new File(AppConstants.CONFIG_FILE);
 		if (!file.exists()) {
 			file.createNewFile();
@@ -68,5 +70,5 @@ public class RWConfigFile {
 			e.printStackTrace();
 		}
 	}
-	
+
 }// end class

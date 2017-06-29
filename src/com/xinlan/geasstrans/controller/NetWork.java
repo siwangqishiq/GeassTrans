@@ -58,6 +58,7 @@ public class NetWork {
 		public void run() {
 			try {
 				mSocket = mServerSocket.accept();
+				mSocket.setKeepAlive(true);
 				establishConnection();
 			} catch (IOException e) {
 				e.printStackTrace();
