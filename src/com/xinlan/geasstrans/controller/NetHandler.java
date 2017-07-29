@@ -11,7 +11,7 @@ import com.xinlan.geasstrans.model.FileBean;
 public class NetHandler {
 	public static final int BUFFER_SIZE = 20 * 1024;// 20k
 
-	public static final int FILE_BUFFER_SIZE = 1024 * 1024;// 1M
+	public static final int FILE_BUFFER_SIZE = 1024 * 20;// 20k
 
 	protected InputStream in;
 	protected OutputStream out;

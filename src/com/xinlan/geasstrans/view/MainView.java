@@ -281,7 +281,7 @@ public class MainView {
 		mFileListText = new JLabel();
 		mFileSelectPanel.add(mFileListText);
 
-		mSelectFileBtn = new JButton("选择文件");
+		mSelectFileBtn = new JButton("选择文件或文件夹");
 		mSendFileBtn = new JButton("发送文件");
 		mSendFileBtn.setVisible(false);
 		mCancelSendBtn = new JButton("取消选择");
@@ -408,7 +408,7 @@ public class MainView {
 	 */
 	private void addFileToTrans() {
 		JFileChooser chooser = new JFileChooser();
-		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 
 		String lastOpenDir = RWConfigFile.readKey(AppConstants.LAST_OPEN_FOLDER);
 		if (lastOpenDir != null) {
@@ -418,16 +418,30 @@ public class MainView {
 			}
 		}
 
-		chooser.showDialog(new JLabel(), "选择传输文件");
+		chooser.showDialog(new JLabel(), "选择传输文件或文件夹");
 
 		File selectFile = chooser.getSelectedFile();
+		
 		// System.out.println("selectFile ---> "+selectFile.getAbsolutePath());
 		if (selectFile != null) {
-			mSelectedList.add(FileBean.create(selectFile.getAbsolutePath()));
-			refreshSendListFileUI();
+			if(selectFile.isDirectory()){//选择文件夹
+				//列出文件夹下的所有文件
+				File[] files = selectFile.listFiles();
+				for(File f:files){
+					if(f.isFile()){
+						mSelectedList.add(FileBean.create(f.getAbsolutePath()));
+					}
+				}//end for each
+			}else if(selectFile.isFile()){//选择单个文件
+				mSelectedList.add(FileBean.create(selectFile.getAbsolutePath()));
+				 //System.out.println("writeKey ---> "+selectFile.getParent());
+			}
 			
-			 System.out.println("writeKey ---> "+selectFile.getParent());
+			if(mSelectedList.size()<=0)
+				return;
+			
 			RWConfigFile.writeKey(AppConstants.LAST_OPEN_FOLDER, selectFile.getParent());
+			refreshSendListFileUI();
 		}
 	}
 
